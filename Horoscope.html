@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Stardust Horoscope</title>
+<meta name="description" content="Daily horoscopes for all twelve zodiac signs, a birthday sign finder, moon phase and a compatibility checker.">
+<style>
+:root{
+  --bg:#0b0a1f;
+  --bg2:#15123a;
+  --card:rgba(255,255,255,.06);
+  --card-border:rgba(255,255,255,.12);
+  --text:#ecebff;
+  --muted:#a9a6d6;
+  --accent:#b69cff;
+  --accent2:#ffcf7a;
+  --good:#7be0b0;
+  --radius:18px;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0;
+  font-family:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  color:var(--text);
+  background:radial-gradient(1200px 800px at 80% -10%,#2a1f6b 0%,transparent 60%),
+             radial-gradient(900px 700px at -10% 30%,#1b2a6b 0%,transparent 55%),
+             var(--bg);
+  background-attachment:fixed;
+  min-height:100vh;
+  line-height:1.55;
+}
+#stars{position:fixed;inset:0;width:100%;height:100%;z-index:0;pointer-events:none}
+.wrap{position:relative;z-index:1;max-width:1000px;margin:0 auto;padding:0 20px 60px}
+header{text-align:center;padding:56px 0 28px}
+header h1{
+  font-family:Georgia,"Times New Roman",serif;
+  font-weight:400;font-size:clamp(2rem,6vw,3.4rem);margin:0;letter-spacing:.02em;
+  background:linear-gradient(90deg,var(--accent),var(--accent2));
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+}
+header p{color:var(--muted);margin:10px auto 0;max-width:520px}
+.datebar{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin-top:18px;color:var(--muted);font-size:.95rem}
+.pill{background:var(--card);border:1px solid var(--card-border);padding:6px 14px;border-radius:999px}
+h2{font-family:Georgia,serif;font-weight:400;font-size:1.5rem;margin:40px 0 14px}
+.card{background:var(--card);border:1px solid var(--card-border);border-radius:var(--radius);padding:22px;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+
+/* sign grid */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
+.sign-btn{
+  font:inherit;color:inherit;cursor:pointer;text-align:center;
+  background:var(--card);border:1px solid var(--card-border);border-radius:14px;padding:14px 8px;
+  transition:transform .15s,border-color .15s,background .15s;
+}
+.sign-btn:hover{transform:translateY(-3px);border-color:var(--accent)}
+.sign-btn:focus-visible,button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid var(--accent2);outline-offset:2px}
+.sign-btn[aria-pressed="true"]{background:linear-gradient(160deg,rgba(182,156,255,.28),rgba(255,207,122,.14));border-color:var(--accent)}
+.sign-btn .sym{display:block;font-size:2rem;line-height:1.2}
+.sign-btn .nm{display:block;font-weight:600}
+.sign-btn .dt{display:block;color:var(--muted);font-size:.78rem}
+
+/* finder */
+.finder{display:flex;gap:12px;flex-wrap:wrap;align-items:end}
+label{display:block;font-size:.85rem;color:var(--muted);margin-bottom:4px}
+input[type=date],select{
+  font:inherit;color:var(--text);background:rgba(0,0,0,.35);border:1px solid var(--card-border);
+  border-radius:10px;padding:10px 12px;min-width:170px;color-scheme:dark;
+}
+.btn{
+  font:inherit;cursor:pointer;color:#14103a;font-weight:600;border:0;border-radius:10px;padding:11px 18px;
+  background:linear-gradient(90deg,var(--accent),var(--accent2));
+}
+.btn:hover{filter:brightness(1.08)}
+#finderMsg{margin:12px 0 0;color:var(--muted);min-height:1.4em}
+
+/* reading */
+.reading-head{display:flex;gap:18px;align-items:center;flex-wrap:wrap;margin-bottom:16px}
+.big-sym{font-size:3.4rem;line-height:1;width:84px;height:84px;display:grid;place-items:center;border-radius:50%;
+  background:radial-gradient(circle at 30% 30%,rgba(182,156,255,.45),rgba(255,207,122,.12));border:1px solid var(--card-border)}
+.reading-head h3{margin:0;font-family:Georgia,serif;font-weight:400;font-size:1.9rem}
+.meta{color:var(--muted);font-size:.9rem;display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:4px}
+.tabs{display:inline-flex;background:rgba(0,0,0,.3);border-radius:999px;padding:4px;margin:6px 0 18px;border:1px solid var(--card-border)}
+.tabs button{font:inherit;color:var(--muted);background:none;border:0;border-radius:999px;padding:7px 16px;cursor:pointer}
+.tabs button[aria-selected="true"]{background:linear-gradient(90deg,var(--accent),var(--accent2));color:#14103a;font-weight:600}
+.overview{font-size:1.1rem;margin:0 0 20px}
+.sections{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px}
+.sec{background:rgba(0,0,0,.25);border:1px solid var(--card-border);border-radius:14px;padding:16px}
+.sec h4{margin:0 0 6px;font-size:.8rem;text-transform:uppercase;letter-spacing:.12em;color:var(--accent2)}
+.sec p{margin:0;color:var(--text)}
+.meters{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px 22px;margin:22px 0}
+.meter .row{display:flex;justify-content:space-between;font-size:.9rem;color:var(--muted);margin-bottom:5px}
+.bar{height:8px;border-radius:99px;background:rgba(255,255,255,.1);overflow:hidden}
+.bar i{display:block;height:100%;width:0;border-radius:99px;background:linear-gradient(90deg,var(--accent),var(--accent2));transition:width .7s ease}
+.lucky{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+.lucky div{background:rgba(0,0,0,.25);border:1px solid var(--card-border);border-radius:14px;padding:12px 14px}
+.lucky small{display:block;color:var(--muted);font-size:.75rem;text-transform:uppercase;letter-spacing:.1em}
+.lucky b{font-size:1.15rem;font-weight:600}
+.swatch{display:inline-block;width:14px;height:14px;border-radius:50%;margin-right:8px;vertical-align:-1px;border:1px solid rgba(255,255,255,.4)}
+
+/* compat */
+.compat-form{display:flex;flex-wrap:wrap;gap:12px;align-items:end}
+.heart{font-size:1.4rem;padding-bottom:8px}
+#compatOut{margin-top:20px}
+.score{display:flex;align-items:center;gap:18px;flex-wrap:wrap}
+.ring{--p:0;width:96px;height:96px;border-radius:50%;display:grid;place-items:center;
+  background:conic-gradient(var(--accent2) calc(var(--p)*1%),rgba(255,255,255,.1) 0)}
+.ring span{width:76px;height:76px;border-radius:50%;background:var(--bg2);display:grid;place-items:center;font-weight:700;font-size:1.3rem}
+
+footer{text-align:center;color:var(--muted);font-size:.85rem;margin-top:48px}
+.sr{position:absolute;left:-9999px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
+</style>
+</head>
+<body>
+<canvas id="stars" aria-hidden="true"></canvas>
+<div class="wrap">
+  <header>
+    <h1>✦ Stardust Horoscope ✦</h1>
+    <p>Pick your sign, or enter your birthday, for a reading shaped by the day's sky.</p>
+    <div class="datebar">
+      <span class="pill" id="todayPill"></span>
+      <span class="pill" id="moonPill"></span>
+    </div>
+  </header>
+
+  <main>
+    <h2>Choose your sign</h2>
+    <div class="grid" id="signGrid" role="group" aria-label="Zodiac signs"></div>
+
+    <h2>Not sure of your sign?</h2>
+    <div class="card">
+      <div class="finder">
+        <div>
+          <label for="bday">Your birthday</label>
+          <input type="date" id="bday">
+        </div>
+        <button class="btn" id="findBtn" type="button">Find my sign</button>
+      </div>
+      <p id="finderMsg" aria-live="polite"></p>
+    </div>
+
+    <h2 id="readingTitle">Your reading</h2>
+    <section class="card" id="reading" aria-live="polite">
+      <p style="color:var(--muted);margin:0">Select a sign above to reveal today's reading.</p>
+    </section>
+
+    <h2>Compatibility</h2>
+    <div class="card">
+      <div class="compat-form">
+        <div><label for="cA">First sign</label><select id="cA"></select></div>
+        <div class="heart" aria-hidden="true">♡</div>
+        <div><label for="cB">Second sign</label><select id="cB"></select></div>
+        <button class="btn" id="cBtn" type="button">Check match</button>
+      </div>
+      <div id="compatOut" aria-live="polite"></div>
+    </div>
+  </main>
+
+  <footer>
+    <p>For entertainment only. Readings are generated in your browser from the sign and the date, so the same sign always gets the same reading on the same day.</p>
+  </footer>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  /* ---------- Data ---------- */
+  var SIGNS = [
+    { n:'Aries',       s:'♈', d:'Mar 21 – Apr 19', e:'Fire',  m:'Cardinal', p:'Mars',    t:['bold','direct','spirited'] },
+    { n:'Taurus',      s:'♉', d:'Apr 20 – May 20', e:'Earth', m:'Fixed',    p:'Venus',   t:['steady','sensual','determined'] },
+    { n:'Gemini',      s:'♊', d:'May 21 – Jun 20', e:'Air',   m:'Mutable',  p:'Mercury', t:['curious','quick-witted','adaptable'] },
+    { n:'Cancer',      s:'♋', d:'Jun 21 – Jul 22', e:'Water', m:'Cardinal', p:'the Moon',t:['intuitive','protective','tender'] },
+    { n:'Leo',         s:'♌', d:'Jul 23 – Aug 22', e:'Fire',  m:'Fixed',    p:'the Sun', t:['radiant','generous','proud'] },
+    { n:'Virgo',       s:'♍', d:'Aug 23 – Sep 22', e:'Earth', m:'Mutable',  p:'Mercury', t:['precise','helpful','observant'] },
+    { n:'Libra',       s:'♎', d:'Sep 23 – Oct 22', e:'Air',   m:'Cardinal', p:'Venus',   t:['diplomatic','graceful','fair-minded'] },
+    { n:'Scorpio',     s:'♏', d:'Oct 23 – Nov 21', e:'Water', m:'Fixed',    p:'Pluto',   t:['intense','resourceful','magnetic'] },
+    { n:'Sagittarius', s:'♐', d:'Nov 22 – Dec 21', e:'Fire',  m:'Mutable',  p:'Jupiter', t:['adventurous','optimistic','frank'] },
+    { n:'Capricorn',   s:'♑', d:'Dec 22 – Jan 19', e:'Earth', m:'Cardinal', p:'Saturn',  t:['disciplined','ambitious','dependable'] },
+    { n:'Aquarius',    s:'♒', d:'Jan 20 – Feb 18', e:'Air',   m:'Fixed',    p:'Uranus',  t:['original','independent','humane'] },
+    { n:'Pisces',      s:'♓', d:'Feb 19 – Mar 20', e:'Water', m:'Mutable',  p:'Neptune', t:['dreamy','compassionate','imaginative'] }
+  ];
+
+  var COLORS = [
+    ['Crimson','#dc143c'],['Amber','#ffbf00'],['Teal','#14b8a6'],['Violet','#8b5cf6'],
+    ['Rose','#fb7185'],['Sky blue','#38bdf8'],['Emerald','#10b981'],['Gold','#f5c542'],
+    ['Silver','#cbd5e1'],['Indigo','#6366f1'],['Coral','#ff7f50'],['Lilac','#c4b5fd']
+  ];
+
+  var TIMES = ['early morning','mid-morning','around noon','early afternoon','late afternoon','at sunset','early evening','late evening'];
+  var MOODS = ['Reflective','Playful','Focused','Hopeful','Restless','Warm','Confident','Calm','Curious','Bold'];
+
+  var POOLS = {
+    overview: [
+      '{planet} lends your {t1} nature extra momentum today. Trust your first instinct this morning, then give it room to prove itself.',
+      'A quiet shift in the atmosphere favors your {t2} side. Small, deliberate choices now will matter more than grand gestures.',
+      'The day asks you to balance being {t1} with being patient. Something you set in motion recently starts to show its shape.',
+      'With {planet} in your corner, your {t3} streak is easy for others to notice. Let it work for you instead of apologizing for it.',
+      'You may feel pulled in two directions. Your {t2} instincts know which one to follow, so listen before you decide.',
+      'Today rewards {t1} people who stay flexible. A plan can change without the goal changing.',
+      'An old idea resurfaces with fresh energy. Your {t3} perspective turns it into something workable.',
+      'The sky favors honest conversation and clear boundaries. Being {t2} gets you further than being loud.'
+    ],
+    love: [
+      'Say the kind thing out loud. Someone is waiting for a sign that you are paying attention.',
+      'Romance runs on small rituals today. A message, a shared meal or a short walk says plenty.',
+      'If you are single, a casual setting brings a pleasant surprise. Stay curious, not strategic.',
+      'A misunderstanding softens once you ask a question instead of assuming. Listen all the way to the end.',
+      'You are more magnetic than usual. Use that gently, and be clear about what you actually want.',
+      'Give yourself the same patience you give others. Self-respect is attractive and it steadies every bond.',
+      'Old feelings may stir. Notice them without acting on them until you know what they are asking for.',
+      'Shared laughter does more than serious talk today. Let things stay light.'
+    ],
+    career: [
+      'Finish one important task before opening new ones. Visible progress builds your confidence and your reputation.',
+      'A colleague has information you need. Ask directly and early, and do not wait for it to be offered.',
+      'Your ideas land well in writing today. Put the proposal on paper before you pitch it.',
+      'Avoid committing to anything until you have read the details twice. A small clause matters.',
+      'Collaboration beats solo effort. Share credit freely, since it comes back to you with interest.',
+      'Money decisions favor the patient. Compare options and sleep on anything that feels rushed.',
+      'A routine task hides a better method. Ten minutes of thought now saves hours later.',
+      'Someone senior notices your steady work. Keep delivering and say yes to a stretch opportunity.'
+    ],
+    wellness: [
+      'Your body asks for water, daylight and a proper break. Treat all three as non-negotiable.',
+      'A short walk clears more than another cup of coffee will. Move before you feel stuck.',
+      'Stretch your neck and shoulders, where you are holding more tension than you realize.',
+      'Sleep is the best investment available tonight. Put the screen down thirty minutes earlier.',
+      'Eat something fresh and unhurried today. Mindful meals settle a busy mind.',
+      'Your energy peaks in bursts. Plan demanding work for those windows and rest in the gaps.',
+      'Fresh air and a little quiet reset your mood. Even five minutes outside counts.',
+      'Laughing with a friend is real medicine today. Make time for it.'
+    ],
+    advice: [
+      'Do the thing you have been postponing for ten minutes. Momentum does the rest.',
+      'Choose curiosity over certainty. You learn more that way.',
+      'Let someone help you. Accepting support is a skill.',
+      'Keep your promises small and your follow-through large.',
+      'Write down one thing you are grateful for before bed.',
+      'Slow down at the decision point. The right answer appears when you stop forcing it.',
+      'Be generous with your attention. It is the rarest gift you can give.',
+      'Say no once today, kindly and without a long explanation.'
+    ]
+  };
+
+  var COMPAT_TEXT = {
+    same:  'Two people of the same element understand each other almost without words. The risk is that you amplify each other\'s blind spots, so keep some honest curiosity alive.',
+    harm:  'Your elements support and enliven each other. There is natural ease here, and each of you brings out what the other is missing.',
+    clash: 'Your elements pull in different directions, which makes things less automatic and more interesting. With patience and humor, you can learn a great deal from each other.'
+  };
+
+  /* ---------- Helpers ---------- */
+  function $(id){ return document.getElementById(id); }
+
+  // Seeded PRNG so the same sign + date always gives the same reading.
+  function hash(str){
+    var h = 1779033703 ^ str.length;
+    for (var i = 0; i < str.length; i++){
+      h = Math.imul(h ^ str.charCodeAt(i), 3432918353);
+      h = (h << 13) | (h >>> 19);
+    }
+    return function(){
+      h = Math.imul(h ^ (h >>> 16), 2246822507);
+      h = Math.imul(h ^ (h >>> 13), 3266489909);
+      return (h ^= h >>> 16) >>> 0;
+    };
+  }
+  function rng(seedStr){
+    var a = hash(seedStr)();
+    return function(){
+      a |= 0; a = a + 0x6D2B79F5 | 0;
+      var t = Math.imul(a ^ a >>> 15, 1 | a);
+      t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+      return ((t ^ t >>> 14) >>> 0) / 4294967296;
+    };
+  }
+  function pick(r, arr){ return arr[Math.floor(r() * arr.length)]; }
+  function between(r, lo, hi){ return lo + Math.floor(r() * (hi - lo + 1)); }
+
+  function fill(text, sign){
+    return text
+      .replace(/\{planet\}/g, sign.p === 'the Moon' || sign.p === 'the Sun' ? sign.p.charAt(0).toUpperCase() + sign.p.slice(1) : sign.p)
+      .replace(/\{t1\}/g, sign.t[0])
+      .replace(/\{t2\}/g, sign.t[1])
+      .replace(/\{t3\}/g, sign.t[2]);
+  }
+
+  function dateKey(d){
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+  }
+  function addDays(d, n){
+    var x = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+    x.setDate(x.getDate() + n);
+    return x;
+  }
+  function pretty(d){
+    return d.toLocaleDateString(undefined, { weekday:'long', month:'long', day:'numeric', year:'numeric' });
+  }
+
+  function signIndexFor(month, day){
+    var md = month * 100 + day;
+    if (md >= 1222 || md <= 119) return 9;   // Capricorn
+    if (md <= 218) return 10;                // Aquarius
+    if (md <= 320) return 11;                // Pisces
+    if (md <= 419) return 0;                 // Aries
+    if (md <= 520) return 1;                 // Taurus
+    if (md <= 620) return 2;                 // Gemini
+    if (md <= 722) return 3;                 // Cancer
+    if (md <= 822) return 4;                 // Leo
+    if (md <= 922) return 5;                 // Virgo
+    if (md <= 1022) return 6;                // Libra
+    if (md <= 1121) return 7;                // Scorpio
+    return 8;                                // Sagittarius (Nov 22 – Dec 21)
+  }
+
+  function moonPhase(d){
+    var ref = Date.UTC(2000, 0, 6, 18, 14);
+    var days = (Date.UTC(d.getFullYear(), d.getMonth(), d.getDate(), 12) - ref) / 86400000;
+    var cycle = 29.530588853;
+    var age = ((days % cycle) + cycle) % cycle;
+    var idx = Math.floor((age / cycle) * 8 + 0.5) % 8;
+    var names = ['New Moon','Waxing Crescent','First Quarter','Waxing Gibbous','Full Moon','Waning Gibbous','Last Quarter','Waning Crescent'];
+    var icons = ['🌑','🌒','🌓','🌔','🌕','🌖','🌗','🌘'];
+    return { name: names[idx], icon: icons[idx] };
+  }
+
+  /* ---------- State ---------- */
+  var today = new Date();
+  var state = { sign: null, offset: 0 };
+
+  function save(key, val){ try { localStorage.setItem(key, val); } catch (e) {} }
+  function load(key){ try { return localStorage.getItem(key); } catch (e) { return null; } }
+
+  /* ---------- Reading ---------- */
+  function buildReading(signIdx, date){
+    var sign = SIGNS[signIdx];
+    var r = rng(sign.n + '|' + dateKey(date));
+    var color = pick(r, COLORS);
+    return {
+      sign: sign,
+      overview: fill(pick(r, POOLS.overview), sign),
+      love: fill(pick(r, POOLS.love), sign),
+      career: fill(pick(r, POOLS.career), sign),
+      wellness: fill(pick(r, POOLS.wellness), sign),
+      advice: fill(pick(r, POOLS.advice), sign),
+      meters: [
+        ['Love', between(r, 45, 98)],
+        ['Career', between(r, 45, 98)],
+        ['Wellness', between(r, 45, 98)],
+        ['Energy', between(r, 45, 98)]
+      ],
+      number: between(r, 1, 99),
+      color: color,
+      time: pick(r, TIMES),
+      mood: pick(r, MOODS)
+    };
+  }
+
+  function renderReading(){
+    var box = $('reading');
+    if (state.sign === null) return;
+    var date = addDays(today, state.offset);
+    var rd = buildReading(state.sign, date);
+    var moon = moonPhase(date);
+    var labels = ['Yesterday','Today','Tomorrow'];
+    var tabsHtml = '<div class="tabs" role="tablist" aria-label="Choose day">';
+    for (var i = -1; i <= 1; i++){
+      tabsHtml += '<button role="tab" type="button" data-off="' + i + '" aria-selected="' + (state.offset === i) + '">' + labels[i + 1] + '</button>';
+    }
+    tabsHtml += '</div>';
+
+    var meters = rd.meters.map(function(m){
+      return '<div class="meter"><div class="row"><span>' + m[0] + '</span><span>' + m[1] + '%</span></div>' +
+             '<div class="bar"><i data-w="' + m[1] + '"></i></div></div>';
+    }).join('');
+
+    box.innerHTML =
+      '<div class="reading-head">' +
+        '<div class="big-sym" aria-hidden="true">' + rd.sign.s + '</div>' +
+        '<div><h3>' + rd.sign.n + '</h3>' +
+        '<div class="meta"><span>' + rd.sign.d + '</span><span>' + rd.sign.e + ' · ' + rd.sign.m + '</span><span>Ruled by ' + rd.sign.p + '</span></div></div>' +
+      '</div>' +
+      tabsHtml +
+      '<p class="meta" style="margin:-8px 0 14px">' + pretty(date) + ' · ' + moon.icon + ' ' + moon.name + '</p>' +
+      '<p class="overview">' + rd.overview + '</p>' +
+      '<div class="meters">' + meters + '</div>' +
+      '<div class="sections">' +
+        '<div class="sec"><h4>♡ Love</h4><p>' + rd.love + '</p></div>' +
+        '<div class="sec"><h4>✦ Career &amp; money</h4><p>' + rd.career + '</p></div>' +
+        '<div class="sec"><h4>☘ Wellness</h4><p>' + rd.wellness + '</p></div>' +
+        '<div class="sec"><h4>☾ Advice</h4><p>' + rd.advice + '</p></div>' +
+      '</div>' +
+      '<h2 style="font-size:1.15rem;margin:26px 0 12px">Lucky details</h2>' +
+      '<div class="lucky">' +
+        '<div><small>Lucky number</small><b>' + rd.number + '</b></div>' +
+        '<div><small>Lucky color</small><b><span class="swatch" style="background:' + rd.color[1] + '"></span>' + rd.color[0] + '</b></div>' +
+        '<div><small>Best time</small><b>' + rd.time.charAt(0).toUpperCase() + rd.time.slice(1) + '</b></div>' +
+        '<div><small>Mood</small><b>' + rd.mood + '</b></div>' +
+      '</div>';
+
+    $('readingTitle').textContent = 'Your reading · ' + rd.sign.n;
+
+    // animate bars
+    requestAnimationFrame(function(){
+      var bars = box.querySelectorAll('.bar i');
+      for (var j = 0; j < bars.length; j++) bars[j].style.width = bars[j].getAttribute('data-w') + '%';
+    });
+
+    // tab handlers
+    var btns = box.querySelectorAll('.tabs button');
+    for (var k = 0; k < btns.length; k++){
+      btns[k].addEventListener('click', function(){
+        state.offset = parseInt(this.getAttribute('data-off'), 10);
+        renderReading();
+      });
+    }
+  }
+
+  function selectSign(idx, scroll){
+    state.sign = idx;
+    state.offset = 0;
+    save('horoscope.sign', String(idx));
+    var btns = $('signGrid').querySelectorAll('.sign-btn');
+    for (var i = 0; i < btns.length; i++){
+      btns[i].setAttribute('aria-pressed', String(i === idx));
+    }
+    renderReading();
+    if (scroll) $('readingTitle').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  /* ---------- Compatibility ---------- */
+  function harmonious(a, b){
+    var pair = [a.e, b.e].sort().join('+');
+    return pair === 'Air+Fire' || pair === 'Earth+Water';
+  }
+
+  function renderCompat(){
+    var ia = parseInt($('cA').value, 10);
+    var ib = parseInt($('cB').value, 10);
+    var a = SIGNS[ia], b = SIGNS[ib];
+    var kind, base;
+    if (a.e === b.e){ kind = 'same'; base = 80; }
+    else if (harmonious(a, b)){ kind = 'harm'; base = 76; }
+    else { kind = 'clash'; base = 58; }
+
+    var lo = Math.min(ia, ib), hi = Math.max(ia, ib);
+    var r = rng('compat|' + lo + '|' + hi);
+    var score = base + between(r, -8, 14);
+    var extra = '';
+    if (Math.abs(ia - ib) === 6){ score += 4; extra = ' Opposite signs like yours often share a strong, magnetic pull.'; }
+    if (ia === ib){ extra = ' Same sign means instant familiarity, along with a mirror you may not always enjoy.'; }
+    score = Math.max(35, Math.min(99, score));
+
+    var label = score >= 85 ? 'Written in the stars' : score >= 70 ? 'Strong potential' : score >= 55 ? 'Needs some effort' : 'Opposites at play';
+
+    $('compatOut').innerHTML =
+      '<div class="score">' +
+        '<div class="ring" style="--p:' + score + '"><span>' + score + '%</span></div>' +
+        '<div><h3 style="margin:0;font-family:Georgia,serif;font-weight:400;font-size:1.4rem">' +
+          a.s + ' ' + a.n + ' &amp; ' + b.s + ' ' + b.n + '</h3>' +
+        '<div class="meta"><span>' + label + '</span><span>' + a.e + ' + ' + b.e + '</span></div></div>' +
+      '</div>' +
+      '<p style="margin:16px 0 0">' + COMPAT_TEXT[kind] + extra + '</p>';
+  }
+
+  /* ---------- Init UI ---------- */
+  function init(){
+    $('todayPill').textContent = pretty(today);
+    var mp = moonPhase(today);
+    $('moonPill').textContent = mp.icon + ' ' + mp.name;
+
+    var grid = $('signGrid');
+    SIGNS.forEach(function(s, i){
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'sign-btn';
+      b.setAttribute('aria-pressed', 'false');
+      b.innerHTML = '<span class="sym" aria-hidden="true">' + s.s + '</span><span class="nm">' + s.n + '</span><span class="dt">' + s.d + '</span>';
+      b.addEventListener('click', function(){ selectSign(i, true); });
+      grid.appendChild(b);
+    });
+
+    ['cA','cB'].forEach(function(id, n){
+      var sel = $(id);
+      SIGNS.forEach(function(s, i){
+        var o = document.createElement('option');
+        o.value = String(i);
+        o.textContent = s.s + ' ' + s.n;
+        sel.appendChild(o);
+      });
+      sel.value = String(n === 0 ? 0 : 4);
+    });
+    $('cBtn').addEventListener('click', renderCompat);
+    $('cA').addEventListener('change', renderCompat);
+    $('cB').addEventListener('change', renderCompat);
+    renderCompat();
+
+    $('findBtn').addEventListener('click', function(){
+      var v = $('bday').value;
+      var msg = $('finderMsg');
+      if (!v){ msg.textContent = 'Please choose your birthday first.'; return; }
+      var parts = v.split('-');
+      var idx = signIndexFor(parseInt(parts[1], 10), parseInt(parts[2], 10));
+      var s = SIGNS[idx];
+      msg.textContent = 'You are a ' + s.n + ' ' + s.s + ' (' + s.d + ').';
+      selectSign(idx, true);
+      $('cA').value = String(idx);
+      renderCompat();
+    });
+
+    var saved = load('horoscope.sign');
+    if (saved !== null && SIGNS[parseInt(saved, 10)]){
+      var idx = parseInt(saved, 10);
+      selectSign(idx, false);
+      $('cA').value = String(idx);
+      renderCompat();
+    }
+  }
+
+  /* ---------- Starfield ---------- */
+  function starfield(){
+    var c = $('stars');
+    var ctx = c.getContext('2d');
+    var stars = [];
+    var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    function resize(){
+      var dpr = window.devicePixelRatio || 1;
+      c.width = window.innerWidth * dpr;
+      c.height = window.innerHeight * dpr;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      var count = Math.min(220, Math.floor(window.innerWidth * window.innerHeight / 7000));
+      stars = [];
+      for (var i = 0; i < count; i++){
+        stars.push({
+          x: Math.random() * window.innerWidth,
+          y: Math.random() * window.innerHeight,
+          r: Math.random() * 1.3 + 0.3,
+          p: Math.random() * Math.PI * 2,
+          s: Math.random() * 0.02 + 0.005
+        });
+      }
+    }
+    function draw(){
+      ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+      for (var i = 0; i < stars.length; i++){
+        var st = stars[i];
+        st.p += st.s;
+        var a = reduce ? 0.7 : 0.4 + 0.6 * Math.abs(Math.sin(st.p));
+        ctx.globalAlpha = a;
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.arc(st.x, st.y, st.r, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.globalAlpha = 1;
+      if (!reduce) requestAnimationFrame(draw);
+    }
+    window.addEventListener('resize', function(){ resize(); if (reduce) draw(); });
+    resize();
+    draw();
+  }
+
+  init();
+  starfield();
+})();
+</script>
+</body>
+</html>
